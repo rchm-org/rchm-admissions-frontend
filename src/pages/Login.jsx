@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { API_BASE } from "../utils/api";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -17,16 +18,19 @@ export default function Login() {
     setError(null);
 
     try {
-      const res = await fetch("http://localhost:5000/api/admin/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      const res = await fetch(
+        `${API_BASE}/api/admin/auth/login`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        }
+      );
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Login failed");
 
-      login(data.token); // store JWT
+      login(data.token);
       navigate("/admin");
     } catch (err) {
       setError(err.message);
@@ -36,66 +40,66 @@ export default function Login() {
   };
 
   return (
-    <div style={wrapper}>
-      <form onSubmit={handleSubmit} style={card}>
-        <h2>Admin Login</h2>
+    <div className="min-h-screen bg-slate-100 flex items-center justify-center px-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-sm p-8">
 
-        {error && <p style={{ color: "red" }}>{error}</p>}
+        {/* Header */}
+        <h1 className="text-2xl font-semibold text-slate-900 mb-2">
+          Admin Login
+        </h1>
+        <p className="text-slate-600 mb-8">
+          Authorized personnel only.
+        </p>
 
-        <input
-          type="email"
-          placeholder="Admin Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          style={input}
-        />
+        {/* Error */}
+        {error && (
+          <div className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 px-4 py-2 text-sm">
+            {error}
+          </div>
+        )}
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          style={input}
-        />
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-5">
 
-        <button type="submit" disabled={loading} style={button}>
-          {loading ? "Logging in..." : "Login"}
-        </button>
-      </form>
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Email
+            </label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded-lg border border-slate-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-slate-900"
+            />
+          </div>
+
+          {/* Password */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Password
+            </label>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded-lg border border-slate-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-slate-900"
+            />
+          </div>
+
+          {/* Submit */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full mt-4 rounded-lg bg-slate-900 text-white py-3 font-medium hover:bg-slate-800 transition disabled:opacity-60"
+          >
+            {loading ? "Signing in..." : "Sign In"}
+          </button>
+
+        </form>
+      </div>
     </div>
   );
 }
-
-/* styles */
-const wrapper = {
-  minHeight: "100vh",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  background: "#f4f6f8",
-};
-
-const card = {
-  background: "#fff",
-  padding: "2rem",
-  width: "320px",
-  borderRadius: "8px",
-  boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-};
-
-const input = {
-  width: "100%",
-  padding: "10px",
-  marginBottom: "12px",
-};
-
-const button = {
-  width: "100%",
-  padding: "10px",
-  background: "#2c3e50",
-  color: "#fff",
-  border: "none",
-  cursor: "pointer",
-};
