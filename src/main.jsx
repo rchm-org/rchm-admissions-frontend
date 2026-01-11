@@ -4,6 +4,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Admission from "./pages/Admission";
 import AdminAdmissions from "./pages/AdminAdmissions";
+import "./index.css";
+import Home from "./pages/Home";
+
+
 
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -14,6 +18,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <BrowserRouter>
         <Routes>
           {/* Public route */}
+           <Route path="/" element={<Home />} />
           <Route path="/admission" element={<Admission />} />
 
           {/* Protected admin route */}
