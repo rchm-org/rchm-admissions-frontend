@@ -4,7 +4,7 @@ import AdmissionModal from "../components/AdmissionModal";
 import { useAuth } from "../context/AuthContext";
 import Skeleton from "../components/Skeleton";
 import toast from "react-hot-toast";
-import { API_BASE } from "../api"; // ✅ IMPORTANT
+import { API_BASE } from "../api.js"; // ✅ IMPORTANT
 
 export default function AdminAdmissions() {
   const [admissions, setAdmissions] = useState([]);
