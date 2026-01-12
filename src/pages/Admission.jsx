@@ -40,7 +40,7 @@ export default function Admission() {
       Object.entries(form).forEach(([k, v]) => data.append(k, v));
       Object.entries(files).forEach(([k, v]) => data.append(k, v));
 
-      const res = await fetch(`${API_BASE}/api/admin/admissions`, {
+      const res = await fetch(`${API_BASE}/utils/api/admin/admissions`, {
         method: "POST",
         body: data,
       });
