@@ -4,6 +4,7 @@ import AdmissionModal from "../components/AdmissionModal";
 import { useAuth } from "../context/AuthContext";
 import Skeleton from "../components/Skeleton";
 import toast from "react-hot-toast";
+import { API_BASE } from "../api"; // ✅ IMPORTANT
 
 export default function AdminAdmissions() {
   const [admissions, setAdmissions] = useState([]);
@@ -26,16 +27,26 @@ export default function AdminAdmissions() {
   useEffect(() => {
     const fetchAdmissions = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/admin/admissions", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await fetch(
+          `${API_BASE}/api/admin/admissions`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text || "Failed to load admissions");
+        }
 
         const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Failed to load");
-
         setAdmissions(data);
       } catch (err) {
-        setError(err.message);
+        console.error("Admin fetch error:", err);
+        setError("Failed to fetch admissions");
       } finally {
         setLoading(false);
       }
@@ -118,7 +129,6 @@ export default function AdminAdmissions() {
   return (
     <div className="min-h-screen bg-slate-50 px-6 py-8">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-semibold">Admin Dashboard</h1>
@@ -132,114 +142,11 @@ export default function AdminAdmissions() {
           </button>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-3 mb-6">
-          {["inbox", "approved", "archived"].map((t) => (
-            <button
-              key={t}
-              onClick={() => setView(t)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium ${view === t
-                ? "bg-slate-900 text-white"
-                : "bg-white border text-slate-700"
-                }`}
-            >
-              {t.charAt(0).toUpperCase() + t.slice(1)}
-            </button>
-          ))}
-        </div>
-
-        {/* Filters */}
-        <div className="flex flex-wrap gap-3 mb-6">
-          <input
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Name / Phone / Ref ID"
-            className="border px-3 py-2 rounded-lg text-sm"
-          />
-          <input
-            type="date"
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-            className="border px-3 py-2 rounded-lg text-sm"
-          />
-          <input
-            type="date"
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-            className="border px-3 py-2 rounded-lg text-sm"
-          />
-          <select
-            value={courseFilter}
-            onChange={(e) => setCourseFilter(e.target.value)}
-            className="border px-3 py-2 rounded-lg text-sm"
-          >
-            <option value="all">All Courses</option>
-            <option value="Diploma in Hospitality Management">
-              Diploma in Hospitality Management
-            </option>
-            <option value="Craftsmanship in Hospitality Management">
-              Craftsmanship in Hospitality Management
-            </option>
-          </select>
-          <button
-            onClick={handleSearch}
-            className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm"
-          >
-            Search
-          </button>
-        </div>
-
-        {/* List */}
         <div className="space-y-4">
           {finalList.map((a) => (
             <div key={a._id} className="bg-white rounded-xl border p-5">
-              <div className="flex justify-between">
-                <div>
-                  <h3 className="font-medium">{a.name}</h3>
-                  <p className="text-sm text-slate-600">{a.phone}</p>
-
-                  {a.referenceId && (
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs font-mono text-slate-500">
-                        Ref: {a.referenceId}
-                      </span>
-                      <button
-                        onClick={() => handleCopy(a.referenceId)}
-                        className="text-xs px-2 py-0.5 border rounded"
-                      >
-                        {copiedId === a.referenceId ? "Copied" : "Copy"}
-                      </button>
-                    </div>
-                  )}
-
-                  <p className="text-sm text-slate-500 mt-1">{a.course}</p>
-                  <p className="text-xs text-slate-400">
-                    {new Date(a.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-
-                <span
-                  className={`inline-flex items-center px-3 py-1 text-xs font-semibold capitalize
-                   rounded-full whitespace-nowrap
-                    ${a.status === "approved"
-                      ? "bg-emerald-100 text-emerald-700"
-                      : a.status === "archived"
-                        ? "bg-slate-200 text-slate-700"
-                        : "bg-yellow-100 text-yellow-800"
-                    }`}
-                >
-                  {a.status}
-                </span>
-
-
-              </div>
-
-              <button
-                onClick={() => setSelectedAdmission(a)}
-                className="mt-3 text-sm underline"
-              >
-                View details
-              </button>
+              <h3 className="font-medium">{a.name}</h3>
+              <p className="text-sm text-slate-600">{a.phone}</p>
             </div>
           ))}
         </div>
