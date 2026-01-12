@@ -12,7 +12,9 @@ export default function Admission() {
   const [files, setFiles] = useState({});
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [referenceId, setReferenceId] = useState("");
 
+  /* 🔗 Preselect course from URL */
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const courseFromURL = params.get("course");
@@ -43,8 +45,10 @@ export default function Admission() {
         body: data,
       });
 
+      const result = await res.json();
       if (!res.ok) throw new Error();
 
+      setReferenceId(result.referenceId);
       toast.success("Application submitted successfully!");
       setSubmitted(true);
     } catch {
@@ -66,17 +70,26 @@ export default function Admission() {
           </h1>
 
           <p className="text-slate-600 mt-3">
-            Thank you for applying to the{" "}
+            Thank you for applying to{" "}
             <span className="font-medium">
               Royal College of Hospitality &amp; Management
             </span>.
           </p>
 
-          <p className="text-slate-500 mt-2 text-sm">
-            Our admissions team will review your application and contact you soon.
-          </p>
+          {/* 📌 Reference ID */}
+          <div className="mt-6 bg-slate-100 border border-slate-300 rounded-xl p-4">
+            <p className="text-sm text-slate-600">
+              Your Application Reference ID
+            </p>
+            <p className="text-lg font-mono font-semibold text-slate-900 mt-1">
+              {referenceId}
+            </p>
+            <p className="text-xs text-slate-500 mt-2">
+              Please save this reference number for future communication.
+            </p>
+          </div>
 
-          {/* 🔘 ACTION BUTTONS */}
+          {/* Actions */}
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={() => window.location.reload()}

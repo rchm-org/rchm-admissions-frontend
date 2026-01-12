@@ -62,6 +62,14 @@ export default function AdmissionModal({
           <p><strong>Email:</strong> {admission.email}</p>
           <p><strong>Phone:</strong> {admission.phone}</p>
           <p><strong>Course:</strong> {admission.course}</p>
+
+          {/* Reference ID */}
+          {admission.referenceId && (
+            <p className="font-mono text-xs text-slate-500">
+              <strong>Reference ID:</strong> {admission.referenceId}
+            </p>
+          )}
+
           <p>
             <strong>Status:</strong>{" "}
             <span className="capitalize font-medium">
@@ -113,35 +121,50 @@ export default function AdmissionModal({
         {/* Actions */}
         <div className="mt-6 flex justify-end gap-3">
 
-          {/* Approve — only if NOT approved or archived */}
-          {!isApproved && !isArchived && (
-            <button
-              onClick={() => updateStatus("approved")}
-              className="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500 transition"
-            >
-              Approve
-            </button>
-          )}
+          {/* APPROVE */}
+          <button
+            disabled={isApproved || isArchived}
+            onClick={() => updateStatus("approved")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition
+              ${
+                isApproved || isArchived
+                  ? "bg-slate-300 text-slate-600 cursor-not-allowed"
+                  : "bg-emerald-600 text-white hover:bg-emerald-500"
+              }
+            `}
+          >
+            Approve
+          </button>
 
-          {/* Archive — ONLY if NOT approved */}
-          {!isApproved && !isArchived && (
-            <button
-              onClick={() => updateStatus("archived")}
-              className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 transition"
-            >
-              Archive
-            </button>
-          )}
+          {/* ARCHIVE */}
+          <button
+            disabled={isApproved || isArchived}
+            onClick={() => updateStatus("archived")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition
+              ${
+                isApproved || isArchived
+                  ? "bg-slate-300 text-slate-600 cursor-not-allowed"
+                  : "bg-slate-900 text-white hover:bg-slate-800"
+              }
+            `}
+          >
+            Archive
+          </button>
 
-          {/* Unarchive — ONLY from archived */}
-          {isArchived && (
-            <button
-              onClick={() => updateStatus("pending")}
-              className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-sm font-medium hover:bg-slate-100 transition"
-            >
-              Unarchive
-            </button>
-          )}
+          {/* UNARCHIVE */}
+          <button
+            disabled={!isArchived}
+            onClick={() => updateStatus("pending")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition
+              ${
+                !isArchived
+                  ? "bg-slate-300 text-slate-600 cursor-not-allowed"
+                  : "border border-slate-300 text-slate-700 hover:bg-slate-100"
+              }
+            `}
+          >
+            Unarchive
+          </button>
 
         </div>
       </div>
