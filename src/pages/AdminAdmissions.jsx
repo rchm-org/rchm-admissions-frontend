@@ -18,6 +18,7 @@ export default function AdminAdmissions() {
   const [searchQuery, setSearchQuery] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [courseFilter, setCourseFilter] = useState("all");
 
   const { token, logout } = useAuth();
   const navigate = useNavigate();
@@ -57,7 +58,7 @@ export default function AdminAdmissions() {
     setSelectedAdmission(null);
   };
 
-  /* 🔍 GLOBAL SEARCH + DATE FILTER */
+  /* 🔍 GLOBAL SEARCH + DATE + COURSE FILTER */
   const globallyFiltered = admissions.filter((a) => {
     const q = searchQuery.toLowerCase();
 
@@ -72,23 +73,25 @@ export default function AdminAdmissions() {
       !fromDate || created >= new Date(fromDate);
 
     const matchesTo =
-      !toDate ||
-      created <= new Date(`${toDate}T23:59:59`);
+      !toDate || created <= new Date(`${toDate}T23:59:59`);
 
-    return matchesSearch && matchesFrom && matchesTo;
+    const matchesCourse =
+      courseFilter === "all" || a.course === courseFilter;
+
+    return matchesSearch && matchesFrom && matchesTo && matchesCourse;
   });
 
   /* 🧭 Apply tab filter ONLY when no global filters are active */
   const isGlobalFilterActive =
-    searchQuery || fromDate || toDate;
+    searchQuery || fromDate || toDate || courseFilter !== "all";
 
   const finalList = isGlobalFilterActive
     ? globallyFiltered
     : globallyFiltered.filter((a) => {
-      if (view === "archived") return a.status === "archived";
-      if (view === "approved") return a.status === "approved";
-      return a.status === "pending" || a.status === "contacted";
-    });
+        if (view === "archived") return a.status === "archived";
+        if (view === "approved") return a.status === "approved";
+        return a.status === "pending" || a.status === "contacted";
+      });
 
   const handleSearch = () => {
     setSearchQuery(searchInput.trim());
@@ -150,17 +153,18 @@ export default function AdminAdmissions() {
             <button
               key={key}
               onClick={() => setView(key)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium capitalize ${view === key
-                ? "bg-slate-900 text-white"
-                : "bg-white border border-slate-300 text-slate-700"
-                }`}
+              className={`px-4 py-2 rounded-lg text-sm font-medium capitalize ${
+                view === key
+                  ? "bg-slate-900 text-white"
+                  : "bg-white border border-slate-300 text-slate-700"
+              }`}
             >
               {key}
             </button>
           ))}
         </div>
 
-        {/* Global Search */}
+        {/* Global Filters */}
         <div className="bg-white rounded-xl border border-slate-200 p-4 mb-6 flex flex-wrap gap-3 items-end">
           <input
             type="text"
@@ -169,6 +173,20 @@ export default function AdminAdmissions() {
             onChange={(e) => setSearchInput(e.target.value)}
             className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
           />
+
+          <select
+            value={courseFilter}
+            onChange={(e) => setCourseFilter(e.target.value)}
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white"
+          >
+            <option value="all">All Courses</option>
+            <option value="Diploma in Hospitality Management">
+              Diploma in Hospitality Management
+            </option>
+            <option value="Craftsmanship in Hospitality Management">
+              Craftsmanship in Hospitality Management
+            </option>
+          </select>
 
           <input
             type="date"
@@ -208,22 +226,24 @@ export default function AdminAdmissions() {
                   <div>
                     <h3 className="font-medium">{a.name}</h3>
                     <p className="text-sm text-slate-600">{a.phone}</p>
+                    <p className="text-sm text-slate-500">{a.course}</p>
                     <p className="text-xs text-slate-400">
                       {new Date(a.createdAt).toLocaleDateString()}
                     </p>
                   </div>
+
                   <span
                     className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full
-                          ${a.status === "approved"
-                        ? "bg-green-100 text-green-700"
-                        : a.status === "archived"
+                      ${
+                        a.status === "approved"
+                          ? "bg-green-100 text-green-700"
+                          : a.status === "archived"
                           ? "bg-slate-200 text-slate-700"
                           : "bg-yellow-100 text-yellow-700"
                       }`}
                   >
                     {a.status}
                   </span>
-
                 </div>
 
                 <button
