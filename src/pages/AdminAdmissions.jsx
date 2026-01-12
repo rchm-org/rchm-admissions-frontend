@@ -26,7 +26,7 @@ export default function AdminAdmissions() {
   useEffect(() => {
     const fetchAdmissions = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/admin/admissions", {
+        const res = await fetch(`${API_BASE}/api/admin/admissions`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
