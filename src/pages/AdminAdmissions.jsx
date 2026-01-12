@@ -4,6 +4,7 @@ import AdmissionModal from "../components/AdmissionModal";
 import { useAuth } from "../context/AuthContext";
 import Skeleton from "../components/Skeleton";
 import toast from "react-hot-toast";
+import { API_BASE } from "../utils/api";
 
 export default function AdminAdmissions() {
   const [admissions, setAdmissions] = useState([]);
@@ -13,7 +14,6 @@ export default function AdminAdmissions() {
   const [copiedId, setCopiedId] = useState(null);
 
   const [view, setView] = useState("inbox");
-
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [fromDate, setFromDate] = useState("");
@@ -31,7 +31,7 @@ export default function AdminAdmissions() {
         });
 
         const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Failed to load");
+        if (!res.ok) throw new Error(data.message || "Failed to load admissions");
 
         setAdmissions(data);
       } catch (err) {
@@ -118,7 +118,6 @@ export default function AdminAdmissions() {
   return (
     <div className="min-h-screen bg-slate-50 px-6 py-8">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-semibold">Admin Dashboard</h1>
@@ -132,23 +131,22 @@ export default function AdminAdmissions() {
           </button>
         </div>
 
-        {/* Tabs */}
         <div className="flex gap-3 mb-6">
           {["inbox", "approved", "archived"].map((t) => (
             <button
               key={t}
               onClick={() => setView(t)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium ${view === t
-                ? "bg-slate-900 text-white"
-                : "bg-white border text-slate-700"
-                }`}
+              className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                view === t
+                  ? "bg-slate-900 text-white"
+                  : "bg-white border text-slate-700"
+              }`}
             >
               {t.charAt(0).toUpperCase() + t.slice(1)}
             </button>
           ))}
         </div>
 
-        {/* Filters */}
         <div className="flex flex-wrap gap-3 mb-6">
           <input
             value={searchInput}
@@ -189,7 +187,6 @@ export default function AdminAdmissions() {
           </button>
         </div>
 
-        {/* List */}
         <div className="space-y-4">
           {finalList.map((a) => (
             <div key={a._id} className="bg-white rounded-xl border p-5">
@@ -219,19 +216,16 @@ export default function AdminAdmissions() {
                 </div>
 
                 <span
-                  className={`inline-flex items-center px-3 py-1 text-xs font-semibold capitalize
-                   rounded-full whitespace-nowrap
-                    ${a.status === "approved"
+                  className={`px-3 py-1 text-xs font-semibold rounded-full capitalize ${
+                    a.status === "approved"
                       ? "bg-emerald-100 text-emerald-700"
                       : a.status === "archived"
-                        ? "bg-slate-200 text-slate-700"
-                        : "bg-yellow-100 text-yellow-800"
-                    }`}
+                      ? "bg-slate-200 text-slate-700"
+                      : "bg-yellow-100 text-yellow-800"
+                  }`}
                 >
                   {a.status}
                 </span>
-
-
               </div>
 
               <button
