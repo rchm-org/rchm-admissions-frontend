@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import AdmissionModal from "../components/AdmissionModal";
 import { useAuth } from "../context/AuthContext";
 import Skeleton from "../components/Skeleton";
@@ -10,32 +9,43 @@ export default function AdminAdmissions() {
   const [admissions, setAdmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
   const [selectedAdmission, setSelectedAdmission] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
 
-  const [view, setView] = useState("inbox");
-  const [searchInput, setSearchInput] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [query, setQuery] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const [courseFilter, setCourseFilter] = useState("all");
+  const [view, setView] = useState("inbox");
+
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const { token, logout } = useAuth();
-  const navigate = useNavigate();
+
+  /* ================= FETCH ================= */
 
   useEffect(() => {
     const fetchAdmissions = async () => {
       try {
-        const res = await fetch(`${API_BASE}/utils/api/admin/admissions`, {
+        const res = await fetch(`${API_BASE}/api/admin/admissions`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Failed to load admissions");
+        if (res.status === 401) {
+          logout();
+          toast.error("Session expired. Please login again.");
+          return;
+        }
 
-        setAdmissions(data);
+        if (!res.ok) {
+          throw new Error(data.message || "Failed to load admissions");
+        }
+
+
+        setAdmissions(Array.isArray(data) ? data : []);
       } catch (err) {
-        setError(err.message);
+        setError(err.message || "Something went wrong");
       } finally {
         setLoading(false);
       }
@@ -44,72 +54,74 @@ export default function AdminAdmissions() {
     fetchAdmissions();
   }, [token]);
 
-  const handleStatusUpdate = (updated) => {
-    setAdmissions((prev) =>
-      prev.map((a) => (a._id === updated._id ? updated : a))
-    );
-    setSelectedAdmission(null);
-  };
+  /* ================= HELPERS ================= */
 
   const handleCopy = async (ref) => {
     try {
       await navigator.clipboard.writeText(ref);
       setCopiedId(ref);
       toast.success("Reference ID copied");
-      setTimeout(() => setCopiedId(null), 1500);
+      setTimeout(() => setCopiedId(null), 1200);
     } catch {
-      toast.error("Failed to copy");
+      toast.error("Copy failed");
     }
   };
 
-  const handleSearch = () => setSearchQuery(searchInput.trim());
-
-  const filtered = admissions.filter((a) => {
-    const q = searchQuery.toLowerCase();
-
-    const matchesSearch =
-      !searchQuery ||
-      a.name?.toLowerCase().includes(q) ||
-      a.phone?.toLowerCase().includes(q) ||
-      a.referenceId?.toLowerCase().includes(q);
-
-    const created = new Date(a.createdAt);
-    const matchesFrom = !fromDate || created >= new Date(fromDate);
-    const matchesTo = !toDate || created <= new Date(`${toDate}T23:59:59`);
-
-    const matchesCourse =
-      courseFilter === "all" || a.course === courseFilter;
-
-    return matchesSearch && matchesFrom && matchesTo && matchesCourse;
-  });
-
-  const finalList = filtered.filter((a) => {
-    if (view === "approved") return a.status === "approved";
-    if (view === "archived") return a.status === "archived";
-    return a.status === "pending" || a.status === "contacted";
-  });
-
-  const handleLogout = () => {
+  const confirmLogout = () => {
     logout();
-    navigate("/login");
+    setShowLogoutModal(false);
+    toast.success("Logged out");
   };
+
+  /* ================= FILTERING ================= */
+
+  const filteredAdmissions = admissions
+    // Global search (overrides tabs)
+    .filter((a) => {
+      if (!query.trim()) return true;
+      const haystack = [
+        a?.name,
+        a?.email,
+        a?.phone,
+        a?.referenceId,
+        a?.course,
+        a?.status,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(query.toLowerCase());
+    })
+    // Tabs only when search empty
+    .filter((a) => {
+      if (query.trim()) return true;
+      if (view === "approved") return a.status === "approved";
+      if (view === "archived") return a.status === "archived";
+      return a.status === "pending" || a.status === "contacted";
+    })
+    // Date filter
+    .filter((a) => {
+      const created = new Date(a.createdAt);
+      if (fromDate && created < new Date(fromDate)) return false;
+      if (toDate && created > new Date(`${toDate}T23:59:59`)) return false;
+      return true;
+    });
+
+  /* ================= RENDER ================= */
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 px-6 py-8">
-        <div className="max-w-6xl mx-auto space-y-4">
-          <Skeleton className="h-8 w-64" />
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-24 w-full" />
-          ))}
-        </div>
+      <div className="min-h-screen bg-slate-50 p-8">
+        <Skeleton className="h-8 w-64 mb-4" />
+        <Skeleton className="h-24 w-full" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center">
         <p className="text-red-600">{error}</p>
       </div>
     );
@@ -118,119 +130,104 @@ export default function AdminAdmissions() {
   return (
     <div className="min-h-screen bg-slate-50 px-6 py-8">
       <div className="max-w-6xl mx-auto">
+
+        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-semibold">Admin Dashboard</h1>
             <p className="text-slate-600">Manage admission applications</p>
           </div>
           <button
-            onClick={handleLogout}
+            onClick={() => setShowLogoutModal(true)}
             className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm"
           >
             Logout
           </button>
         </div>
 
+        {/* Tabs */}
         <div className="flex gap-3 mb-6">
           {["inbox", "approved", "archived"].map((t) => (
             <button
               key={t}
               onClick={() => setView(t)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                view === t
+              className={`px-4 py-2 rounded-lg text-sm ${view === t
                   ? "bg-slate-900 text-white"
-                  : "bg-white border text-slate-700"
-              }`}
+                  : "bg-white border"
+                }`}
             >
-              {t.charAt(0).toUpperCase() + t.slice(1)}
+              {t}
             </button>
           ))}
         </div>
 
-        <div className="flex flex-wrap gap-3 mb-6">
+        {/* Filters */}
+        <div className="bg-white rounded-xl border p-4 mb-6 grid md:grid-cols-5 gap-4">
           <input
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Name / Phone / Ref ID"
-            className="border px-3 py-2 rounded-lg text-sm"
+            type="text"
+            placeholder="Search anything…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="px-3 py-2 border rounded-lg md:col-span-2"
           />
           <input
             type="date"
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
-            className="border px-3 py-2 rounded-lg text-sm"
+            className="px-3 py-2 border rounded-lg"
           />
           <input
             type="date"
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
-            className="border px-3 py-2 rounded-lg text-sm"
+            className="px-3 py-2 border rounded-lg"
           />
-          <select
-            value={courseFilter}
-            onChange={(e) => setCourseFilter(e.target.value)}
-            className="border px-3 py-2 rounded-lg text-sm"
-          >
-            <option value="all">All Courses</option>
-            <option value="Diploma in Hospitality Management">
-              Diploma in Hospitality Management
-            </option>
-            <option value="Craftsmanship in Hospitality Management">
-              Craftsmanship in Hospitality Management
-            </option>
-          </select>
           <button
-            onClick={handleSearch}
-            className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm"
+            onClick={() => {
+              setQuery("");
+              setFromDate("");
+              setToDate("");
+              setView("inbox");
+            }}
+            className="px-4 py-2 rounded-lg bg-slate-100"
           >
-            Search
+            Clear
           </button>
         </div>
 
+        {/* List */}
         <div className="space-y-4">
-          {finalList.map((a) => (
-            <div key={a._id} className="bg-white rounded-xl border p-5">
-              <div className="flex justify-between">
-                <div>
-                  <h3 className="font-medium">{a.name}</h3>
-                  <p className="text-sm text-slate-600">{a.phone}</p>
+          {filteredAdmissions.length === 0 && (
+            <p className="text-center text-slate-500">
+              No admissions found
+            </p>
+          )}
 
-                  {a.referenceId && (
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs font-mono text-slate-500">
-                        Ref: {a.referenceId}
-                      </span>
-                      <button
-                        onClick={() => handleCopy(a.referenceId)}
-                        className="text-xs px-2 py-0.5 border rounded"
-                      >
-                        {copiedId === a.referenceId ? "Copied" : "Copy"}
-                      </button>
-                    </div>
-                  )}
+          {filteredAdmissions.map((a) => (
+            <div
+              key={a._id}
+              className="bg-white rounded-xl border p-5"
+            >
+              <h3 className="font-medium">{a.name}</h3>
+              <p className="text-sm text-slate-600">{a.phone}</p>
 
-                  <p className="text-sm text-slate-500 mt-1">{a.course}</p>
-                  <p className="text-xs text-slate-400">
-                    {new Date(a.createdAt).toLocaleDateString()}
-                  </p>
+              {a.referenceId && (
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs font-mono">
+                    {a.referenceId}
+                  </span>
+                  <button
+                    onClick={() => handleCopy(a.referenceId)}
+                    className="text-xs underline"
+                  >
+                    {copiedId === a.referenceId ? "Copied" : "Copy"}
+                  </button>
                 </div>
-
-                <span
-                  className={`px-3 py-1 text-xs font-semibold rounded-full capitalize ${
-                    a.status === "approved"
-                      ? "bg-emerald-100 text-emerald-700"
-                      : a.status === "archived"
-                      ? "bg-slate-200 text-slate-700"
-                      : "bg-yellow-100 text-yellow-800"
-                  }`}
-                >
-                  {a.status}
-                </span>
-              </div>
+              )}
 
               <button
                 onClick={() => setSelectedAdmission(a)}
-                className="mt-3 text-sm underline"
+                className="mt-2 text-sm underline"
               >
                 View details
               </button>
@@ -238,11 +235,49 @@ export default function AdminAdmissions() {
           ))}
         </div>
 
-        <AdmissionModal
-          admission={selectedAdmission}
-          onClose={() => setSelectedAdmission(null)}
-          onStatusUpdate={handleStatusUpdate}
-        />
+        {/* ✅ SAFE AdmissionModal (only renders when admission exists) */}
+        {selectedAdmission && (
+          <AdmissionModal
+            admission={selectedAdmission}
+            onClose={() => setSelectedAdmission(null)}
+            onStatusUpdate={(updated) =>
+              setAdmissions((prev) =>
+                prev.map((x) =>
+                  x._id === updated._id ? updated : x
+                )
+              )
+            }
+          />
+        )}
+
+        {/* Logout Modal */}
+        {showLogoutModal && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-6 w-full max-w-sm">
+              <h2 className="font-semibold mb-2">
+                Logout confirmation
+              </h2>
+              <p className="text-sm text-slate-600 mb-6">
+                Do you want to stay logged in?
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowLogoutModal(false)}
+                  className="px-4 py-2 rounded bg-slate-100"
+                >
+                  Stay
+                </button>
+                <button
+                  onClick={confirmLogout}
+                  className="px-4 py-2 rounded bg-red-600 text-white"
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );

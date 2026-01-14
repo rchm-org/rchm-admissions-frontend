@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { API_BASE } from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
@@ -8,10 +9,14 @@ export default function AdmissionModal({
   onStatusUpdate,
 }) {
   const { token } = useAuth();
+  const [updating, setUpdating] = useState(false);
 
   if (!admission) return null;
 
   const updateStatus = async (status) => {
+    if (updating) return;
+
+    setUpdating(true);
     try {
       const res = await fetch(
         `${API_BASE}/api/admin/admissions/${admission._id}`,
@@ -26,22 +31,29 @@ export default function AdmissionModal({
       );
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Update failed");
+      if (!res.ok) {
+        throw new Error(data.message || "Status update failed");
+      }
 
       toast.success("Status updated");
       onStatusUpdate(data);
       onClose();
     } catch (err) {
-      toast.error(err.message);
+      toast.error(err.message || "Update failed");
+    } finally {
+      setUpdating(false);
     }
   };
 
-  const isApproved = admission.status === "approved";
-  const isArchived = admission.status === "archived";
+  const status = admission.status;
+  const isApproved = status === "approved";
+  const isArchived = status === "archived";
+
+  const doc = admission.documents || {};
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-lg max-w-xl w-full p-6 relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 animate-fadeIn">
+      <div className="relative bg-white rounded-xl shadow-lg max-w-xl w-full p-6 animate-slideUpFade will-change-transform">
 
         {/* Close */}
         <button
@@ -63,7 +75,6 @@ export default function AdmissionModal({
           <p><strong>Phone:</strong> {admission.phone}</p>
           <p><strong>Course:</strong> {admission.course}</p>
 
-          {/* Reference ID */}
           {admission.referenceId && (
             <p className="font-mono text-xs text-slate-500">
               <strong>Reference ID:</strong> {admission.referenceId}
@@ -73,7 +84,7 @@ export default function AdmissionModal({
           <p>
             <strong>Status:</strong>{" "}
             <span className="capitalize font-medium">
-              {admission.status}
+              {status}
             </span>
           </p>
         </div>
@@ -85,36 +96,44 @@ export default function AdmissionModal({
           </h3>
 
           <ul className="space-y-1 text-sm">
-            <li>
-              <a
-                href={`${API_BASE}/uploads/${admission.documents.marksheet}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-slate-900 hover:underline"
-              >
-                Marksheet
-              </a>
-            </li>
-            <li>
-              <a
-                href={`${API_BASE}/uploads/${admission.documents.idProof}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-slate-900 hover:underline"
-              >
-                ID Proof
-              </a>
-            </li>
-            <li>
-              <a
-                href={`${API_BASE}/uploads/${admission.documents.photo}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-slate-900 hover:underline"
-              >
-                Photograph
-              </a>
-            </li>
+            {doc.marksheet && (
+              <li>
+                <a
+                  href={`${API_BASE}/uploads/${doc.marksheet}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-slate-900 hover:underline"
+                >
+                  Marksheet
+                </a>
+              </li>
+            )}
+
+            {doc.idProof && (
+              <li>
+                <a
+                  href={`${API_BASE}/uploads/${doc.idProof}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-slate-900 hover:underline"
+                >
+                  ID Proof
+                </a>
+              </li>
+            )}
+
+            {doc.photo && (
+              <li>
+                <a
+                  href={`${API_BASE}/uploads/${doc.photo}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-slate-900 hover:underline"
+                >
+                  Photograph
+                </a>
+              </li>
+            )}
           </ul>
         </div>
 
@@ -123,11 +142,11 @@ export default function AdmissionModal({
 
           {/* APPROVE */}
           <button
-            disabled={isApproved || isArchived}
+            disabled={isApproved || isArchived || updating}
             onClick={() => updateStatus("approved")}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition
               ${
-                isApproved || isArchived
+                isApproved || isArchived || updating
                   ? "bg-slate-300 text-slate-600 cursor-not-allowed"
                   : "bg-emerald-600 text-white hover:bg-emerald-500"
               }
@@ -138,11 +157,11 @@ export default function AdmissionModal({
 
           {/* ARCHIVE */}
           <button
-            disabled={isApproved || isArchived}
+            disabled={isApproved || isArchived || updating}
             onClick={() => updateStatus("archived")}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition
               ${
-                isApproved || isArchived
+                isApproved || isArchived || updating
                   ? "bg-slate-300 text-slate-600 cursor-not-allowed"
                   : "bg-slate-900 text-white hover:bg-slate-800"
               }
@@ -153,11 +172,11 @@ export default function AdmissionModal({
 
           {/* UNARCHIVE */}
           <button
-            disabled={!isArchived}
+            disabled={!isArchived || updating}
             onClick={() => updateStatus("pending")}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition
               ${
-                !isArchived
+                !isArchived || updating
                   ? "bg-slate-300 text-slate-600 cursor-not-allowed"
                   : "border border-slate-300 text-slate-700 hover:bg-slate-100"
               }

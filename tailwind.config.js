@@ -5,7 +5,29 @@ export default {
     "./src/**/*.{js,jsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      keyframes: {
+        fadeIn: {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+        slideUpFade: {
+          "0%": {
+            opacity: "0",
+            transform: "translateY(8px)",
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateY(0)",
+          },
+        },
+      },
+      animation: {
+        fadeIn: "fadeIn 150ms ease-out",
+        slideUpFade: "slideUpFade 180ms ease-out",
+      },
+    },
   },
+
   plugins: [],
 };
