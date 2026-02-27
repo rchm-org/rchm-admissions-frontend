@@ -38,8 +38,29 @@ const Admission = () => {
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  const handleFileChange = (key) => (e) =>
-    setFiles({ ...files, [key]: e.target.files[0] || null });
+  const handleFileChange = (key) => (e) => {
+    const file = e.target.files[0];
+    if (!file) {
+      setFiles((prev) => ({ ...prev, [key]: null }));
+      return;
+    }
+
+    if (key === "photograph" && file.type.startsWith("image/")) {
+      const img = new Image();
+      img.onload = () => {
+        if (img.width > img.height) {
+          toast.error("Photograph must be in portrait orientation (taller than it is wide).");
+          e.target.value = ""; // Reset input
+          setFiles((prev) => ({ ...prev, [key]: null }));
+        } else {
+          setFiles((prev) => ({ ...prev, [key]: file }));
+        }
+      };
+      img.src = URL.createObjectURL(file);
+    } else {
+      setFiles((prev) => ({ ...prev, [key]: file }));
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
