@@ -21,6 +21,7 @@ export default function AdminTable({ data, onRowClick, loading }) {
       <table className="w-full text-sm">
         <thead className="bg-slate-50 text-left border-b border-slate-200">
           <tr>
+            <th className="px-4 py-3 font-medium text-slate-600">App ID</th>
             <th className="px-4 py-3 font-medium text-slate-600">Name</th>
             <th className="px-4 py-3 font-medium text-slate-600">Email</th>
             <th className="px-4 py-3 font-medium text-slate-600">Phone</th>
@@ -35,6 +36,7 @@ export default function AdminTable({ data, onRowClick, loading }) {
               onClick={() => onRowClick(a)}
               className="border-t border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors"
             >
+              <td className="px-4 py-3 font-medium text-emerald-600">{a.applicationId || "Legacy"}</td>
               <td className="px-4 py-3 font-medium text-slate-900">{a.name}</td>
               <td className="px-4 py-3 text-slate-600">{a.email}</td>
               <td className="px-4 py-3 text-slate-600">{a.phone}</td>

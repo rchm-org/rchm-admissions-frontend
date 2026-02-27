@@ -88,6 +88,7 @@ export default function AdmissionModal({ admission, onClose, onStatusUpdate }) {
         {/* Details grid */}
         <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm mb-6">
           {[
+            ["App ID", admission.applicationId || "Legacy Format"],
             ["Name", admission.name],
             ["Email", admission.email],
             ["Phone", admission.phone],
@@ -95,7 +96,6 @@ export default function AdmissionModal({ admission, onClose, onStatusUpdate }) {
             ["Applied", new Date(admission.createdAt).toLocaleDateString("en-IN", {
               day: "2-digit", month: "short", year: "numeric",
             })],
-            admission.referenceId ? ["Reference", admission.referenceId] : null,
           ].filter(Boolean).map(([label, value]) => (
             <div key={label}>
               <dt className="text-slate-500 font-medium">{label}</dt>

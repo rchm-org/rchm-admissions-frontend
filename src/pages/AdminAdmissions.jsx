@@ -33,7 +33,7 @@ export default function AdminAdmissions() {
 
       const searchMatch =
         !search ||
-        [a.name, a.email, a.phone, a.course]
+        [a.applicationId || "", a.name, a.email, a.phone, a.course]
           .join(" ")
           .toLowerCase()
           .includes(search.toLowerCase());
