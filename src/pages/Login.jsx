@@ -20,8 +20,12 @@ const Login = () => {
       const res = await api.post("/admin/auth/login", { email, password });
       login(res.data.token);
       navigate("/admin/admissions", { replace: true });
-    } catch {
-      setError("Invalid email or password. Please try again.");
+    } catch (err) {
+      if (err.response?.status === 401) {
+        setError("Invalid credentials. Please make sure you are using admin@rchm.org.in");
+      } else {
+        setError("Login failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
