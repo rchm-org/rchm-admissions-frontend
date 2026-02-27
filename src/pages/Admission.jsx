@@ -99,7 +99,18 @@ const Admission = () => {
 
   if (successData) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-10">
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-4 py-10">
+        <div className="w-full max-w-lg mb-4">
+          <a
+            href="https://www.rchm.org.in"
+            className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors font-medium text-sm"
+          >
+            <svg className="w-4 h-4 border-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Website
+          </a>
+        </div>
         <div className="bg-white rounded-2xl shadow-sm w-full max-w-lg p-10 text-center animate-cardRise border border-emerald-100">
           <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -143,7 +154,18 @@ const Admission = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-10">
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-4 py-10">
+      <div className="w-full max-w-lg mb-4">
+        <a
+          href="https://www.rchm.org.in"
+          className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors font-medium text-sm"
+        >
+          <svg className="w-4 h-4 border-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Website
+        </a>
+      </div>
       <div className="bg-white rounded-2xl shadow-sm w-full max-w-lg p-8">
         <h2 className="text-2xl font-semibold text-slate-900 mb-1">
           Admission Application
