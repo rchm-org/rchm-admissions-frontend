@@ -21,14 +21,13 @@ export default function Home() {
 
           {/* Title */}
           <h1 className="text-3xl sm:text-4xl font-semibold text-slate-900 mb-4">
-            RCHM Admission Portal
+            Royal College of Hospitality & Management
           </h1>
 
           {/* Subtitle */}
           <p className="text-slate-600 text-base sm:text-lg max-w-xl mx-auto mb-10">
-            A secure online portal for managing student admissions.
-            Applicants can submit forms digitally, and administrators can
-            review and manage applications efficiently.
+            The official admissions portal for Royal College of Hospitality & Management.
+            Apply online and track your application status digitally.
           </p>
 
           {/* Actions */}

@@ -39,16 +39,16 @@ const Login = () => {
         <div className="relative z-10 text-center">
           <img src={logo} alt="RCHM Logo" className="h-20 w-auto mx-auto mb-8 drop-shadow-xl" />
           <h1 className="text-3xl font-bold text-white mb-3 tracking-tight">
-            RCHM Admin Portal
+            Royal College of Hospitality & Management
           </h1>
           <p className="text-slate-400 text-sm leading-relaxed max-w-xs mx-auto">
-            Manage student admissions, review applications, and track enrolment — all in one place.
+            Admin portal for managing student admissions, reviewing applications, and tracking enrolment.
           </p>
         </div>
 
         {/* bottom badge */}
         <p className="absolute bottom-6 text-xs text-slate-600 tracking-widest uppercase">
-          Rajiv Gandhi College of Hotel Management
+          Royal College of Hospitality & Management
         </p>
       </div>
 
@@ -118,7 +118,7 @@ const Login = () => {
           </div>
 
           <p className="text-center text-xs text-slate-400 mt-6">
-            © {new Date().getFullYear()} RCHM. All rights reserved.
+            © {new Date().getFullYear()} Royal College of Hospitality & Management. All rights reserved.
           </p>
         </div>
       </div>
