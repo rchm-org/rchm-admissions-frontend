@@ -3,11 +3,7 @@ import { API_BASE } from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 
-export default function AdmissionModal({
-  admission,
-  onClose,
-  onStatusUpdate,
-}) {
+export default function AdmissionModal({ admission, onClose, onStatusUpdate }) {
   const { token } = useAuth();
   const [updating, setUpdating] = useState(false);
 
@@ -15,7 +11,6 @@ export default function AdmissionModal({
 
   const updateStatus = async (status) => {
     if (updating) return;
-
     setUpdating(true);
     try {
       const res = await fetch(
@@ -31,9 +26,7 @@ export default function AdmissionModal({
       );
 
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || "Status update failed");
-      }
+      if (!res.ok) throw new Error(data.message || "Status update failed");
 
       toast.success("Status updated");
       onStatusUpdate(data);
@@ -46,63 +39,77 @@ export default function AdmissionModal({
   };
 
   const status = admission.status;
+  const isPending = status === "pending";
   const isApproved = status === "approved";
   const isArchived = status === "archived";
+  const doc = admission.documents; // AWS S3 URL or null
 
-  const doc = admission.documents; // Cloudinary URL string or null
+  // Button enabled states
+  const canApprove = isPending && !updating;
+  const canArchive = (isPending || isApproved) && !updating;
+  const canUnarchive = isArchived && !updating;
+
+  const btnBase = "px-4 py-2 rounded-lg text-sm font-medium transition-all";
+  const btnEnabled = (color) => `${btnBase} ${color}`;
+  const btnDisabled = `${btnBase} bg-slate-100 text-slate-400 cursor-not-allowed`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 animate-fadeIn">
-      <div className="relative bg-white rounded-xl shadow-lg max-w-xl w-full p-6 animate-slideUpFade will-change-transform">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 animate-fadeIn"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="relative bg-white rounded-xl shadow-xl max-w-xl w-full mx-4 p-6 animate-slideUpFade">
 
         {/* Close */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 text-slate-400 hover:text-slate-700"
+          className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-lg leading-none"
         >
           ✕
         </button>
 
         {/* Header */}
-        <h2 className="text-xl font-semibold text-slate-900 mb-4">
-          Applicant Details
-        </h2>
-
-        {/* Details */}
-        <div className="space-y-2 text-sm text-slate-700">
-          <p><strong>Name:</strong> {admission.name}</p>
-          <p><strong>Email:</strong> {admission.email}</p>
-          <p><strong>Phone:</strong> {admission.phone}</p>
-          <p><strong>Course:</strong> {admission.course}</p>
-
-          {admission.referenceId && (
-            <p className="font-mono text-xs text-slate-500">
-              <strong>Reference ID:</strong> {admission.referenceId}
-            </p>
-          )}
-
-          <p>
-            <strong>Status:</strong>{" "}
-            <span className="capitalize font-medium">
-              {status}
-            </span>
-          </p>
+        <div className="mb-5">
+          <h2 className="text-xl font-semibold text-slate-900">Applicant Details</h2>
+          <span className={`inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full capitalize
+            ${isPending ? "bg-amber-100 text-amber-700" : ""}
+            ${isApproved ? "bg-emerald-100 text-emerald-700" : ""}
+            ${isArchived ? "bg-slate-100 text-slate-600" : ""}
+          `}>
+            {status}
+          </span>
         </div>
 
-        {/* Documents */}
-        <div className="mt-6">
-          <h3 className="font-medium text-slate-900 mb-2">
-            Documents
-          </h3>
+        {/* Details grid */}
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm mb-6">
+          {[
+            ["Name", admission.name],
+            ["Email", admission.email],
+            ["Phone", admission.phone],
+            ["Course", admission.course],
+            ["Applied", new Date(admission.createdAt).toLocaleDateString("en-IN", {
+              day: "2-digit", month: "short", year: "numeric",
+            })],
+            admission.referenceId ? ["Reference", admission.referenceId] : null,
+          ].filter(Boolean).map(([label, value]) => (
+            <div key={label}>
+              <dt className="text-slate-500 font-medium">{label}</dt>
+              <dd className="text-slate-900 mt-0.5">{value}</dd>
+            </div>
+          ))}
+        </dl>
 
+        {/* Document */}
+        <div className="border-t border-slate-100 pt-4 mb-6">
+          <p className="text-sm font-medium text-slate-700 mb-2">Supporting Document</p>
           {doc ? (
             <a
               href={doc}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block text-sm text-blue-600 hover:underline break-all"
+              className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 hover:underline"
             >
-              View Uploaded Document ↗
+              📄 View uploaded document ↗
             </a>
           ) : (
             <p className="text-sm text-slate-400">No document uploaded.</p>
@@ -110,50 +117,36 @@ export default function AdmissionModal({
         </div>
 
         {/* Actions */}
-        <div className="mt-6 flex justify-end gap-3">
-
-          {/* APPROVE */}
+        <div className="flex justify-end gap-3">
           <button
-            disabled={isApproved || isArchived || updating}
+            disabled={!canApprove}
             onClick={() => updateStatus("approved")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition
-              ${isApproved || isArchived || updating
-                ? "bg-slate-300 text-slate-600 cursor-not-allowed"
-                : "bg-emerald-600 text-white hover:bg-emerald-500"
-              }
-            `}
+            className={canApprove
+              ? btnEnabled("bg-emerald-600 text-white hover:bg-emerald-500")
+              : btnDisabled}
           >
             Approve
           </button>
 
-          {/* ARCHIVE */}
           <button
-            disabled={isApproved || isArchived || updating}
+            disabled={!canArchive}
             onClick={() => updateStatus("archived")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition
-              ${isApproved || isArchived || updating
-                ? "bg-slate-300 text-slate-600 cursor-not-allowed"
-                : "bg-slate-900 text-white hover:bg-slate-800"
-              }
-            `}
+            className={canArchive
+              ? btnEnabled("bg-slate-900 text-white hover:bg-slate-700")
+              : btnDisabled}
           >
             Archive
           </button>
 
-          {/* UNARCHIVE */}
           <button
-            disabled={!isArchived || updating}
+            disabled={!canUnarchive}
             onClick={() => updateStatus("pending")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition
-              ${!isArchived || updating
-                ? "bg-slate-300 text-slate-600 cursor-not-allowed"
-                : "border border-slate-300 text-slate-700 hover:bg-slate-100"
-              }
-            `}
+            className={canUnarchive
+              ? btnEnabled("border border-slate-300 text-slate-700 hover:bg-slate-50")
+              : btnDisabled}
           >
             Unarchive
           </button>
-
         </div>
       </div>
     </div>
