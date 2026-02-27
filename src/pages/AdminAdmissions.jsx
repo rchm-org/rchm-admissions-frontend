@@ -6,6 +6,7 @@ import AdminTabs from "../admin/AdminTabs";
 import AdminTable from "../admin/AdminTable";
 import AdmissionModal from "../components/AdmissionModal";
 import toast from "react-hot-toast";
+import { exportAdmissionsToCsv } from "../utils/exportCsv";
 
 export default function AdminAdmissions() {
   const { token } = useAuth();
@@ -58,7 +59,19 @@ export default function AdminAdmissions() {
       date={date}
       setDate={setDate}
     >
-      <AdminTabs active={activeTab} onChange={setActiveTab} />
+      <div className="flex justify-between items-center mb-4">
+        <AdminTabs active={activeTab} onChange={setActiveTab} />
+        <button
+          onClick={() => exportAdmissionsToCsv(filtered)}
+          disabled={!filtered.length}
+          className="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium py-2 px-4 rounded-lg transition shadow-sm disabled:bg-slate-300 disabled:cursor-not-allowed flex items-center gap-2"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Export to CSV
+        </button>
+      </div>
 
       <AdminTable
         loading={loading}
