@@ -33,6 +33,7 @@ const Admission = () => {
     marksheet: null, idDocument: null, photograph: null,
   });
   const [submitting, setSubmitting] = useState(false);
+  const [successData, setSuccessData] = useState(null);
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -50,20 +51,66 @@ const Admission = () => {
       Object.entries(formData).forEach(([k, v]) => payload.append(k, v));
       Object.entries(files).forEach(([k, v]) => { if (v) payload.append(k, v); });
 
-      await api.post("/admissions", payload, {
+      const res = await api.post("/admissions", payload, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
       toast.success("Application submitted successfully!");
-      setFormData({ name: "", email: "", phone: "", course: "" });
-      setFiles({ marksheet: null, idDocument: null, photograph: null });
-      e.target.reset();
+      setSuccessData({
+        pdfUrl: res.data.applicationPdf,
+        name: res.data.name,
+      });
     } catch (err) {
       toast.error(err?.response?.data?.message || "Failed to submit. Please try again.");
     } finally {
       setSubmitting(false);
     }
   };
+
+  if (successData) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-10">
+        <div className="bg-white rounded-2xl shadow-sm w-full max-w-lg p-10 text-center animate-cardRise border border-emerald-100">
+          <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-semibold text-slate-900 mb-2">
+            Application Submitted!
+          </h2>
+          <p className="text-slate-500 mb-8 max-w-sm mx-auto leading-relaxed">
+            Thank you, {successData.name.split(" ")[0]}. Your application has been received successfully. Our admissions team will review it shortly.
+          </p>
+
+          {successData.pdfUrl && (
+            <a
+              href={successData.pdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center w-full mb-4 bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-3 px-6 rounded-lg transition-colors shadow-sm"
+            >
+              <svg className="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Download PDF Receipt
+            </a>
+          )}
+
+          <button
+            onClick={() => {
+              setFormData({ name: "", email: "", phone: "", course: "" });
+              setFiles({ marksheet: null, idDocument: null, photograph: null });
+              setSuccessData(null);
+            }}
+            className="text-slate-500 hover:text-slate-800 font-medium text-sm transition-colors py-2"
+          >
+            Submit another application
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-10">
