@@ -30,14 +30,15 @@ export default function AdminAdmissions() {
 
   const filtered = useMemo(() => {
     return all.filter((a) => {
-      const statusMatch = a.status === activeTab;
-
       const searchMatch =
         !search ||
         [a.applicationId || "", a.name, a.email, a.phone, a.course]
           .join(" ")
           .toLowerCase()
           .includes(search.toLowerCase());
+
+      // If searching globally, ignore the active tab constraint
+      const statusMatch = search ? true : a.status === activeTab;
 
       const dateMatch =
         !date || new Date(a.createdAt).toISOString().slice(0, 10) === date;

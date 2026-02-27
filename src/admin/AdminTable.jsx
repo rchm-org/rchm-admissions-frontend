@@ -26,6 +26,7 @@ export default function AdminTable({ data, onRowClick, loading }) {
             <th className="px-4 py-3 font-medium text-slate-600">Email</th>
             <th className="px-4 py-3 font-medium text-slate-600">Phone</th>
             <th className="px-4 py-3 font-medium text-slate-600">Course</th>
+            <th className="px-4 py-3 font-medium text-slate-600">Status</th>
             <th className="px-4 py-3 font-medium text-slate-600">Date</th>
           </tr>
         </thead>
@@ -41,6 +42,14 @@ export default function AdminTable({ data, onRowClick, loading }) {
               <td className="px-4 py-3 text-slate-600">{a.email}</td>
               <td className="px-4 py-3 text-slate-600">{a.phone}</td>
               <td className="px-4 py-3 text-slate-600">{a.course}</td>
+              <td className="px-4 py-3">
+                <span className={`px-2 py-1 text-xs font-medium rounded-full ${a.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
+                    a.status === 'archived' ? 'bg-slate-100 text-slate-600' :
+                      'bg-amber-100 text-amber-700'
+                  }`}>
+                  {a.status.charAt(0).toUpperCase() + a.status.slice(1)}
+                </span>
+              </td>
               <td className="px-4 py-3 text-slate-500">
                 {new Date(a.createdAt).toLocaleDateString("en-IN", {
                   day: "2-digit", month: "short", year: "numeric",
