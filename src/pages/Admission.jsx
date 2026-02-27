@@ -62,6 +62,15 @@ const Admission = () => {
     }
   };
 
+  const isFormValid =
+    formData.name.trim() !== "" &&
+    formData.email.trim() !== "" &&
+    formData.phone.trim().length === 10 &&
+    formData.course.trim() !== "" &&
+    files.marksheet !== null &&
+    files.idDocument !== null &&
+    files.photograph !== null;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (submitting) return;
@@ -215,9 +224,9 @@ const Admission = () => {
 
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || !isFormValid}
             className={`w-full py-2.5 rounded-lg font-medium text-white transition mt-2
-              ${submitting
+              ${(submitting || !isFormValid)
                 ? "bg-slate-400 cursor-not-allowed"
                 : "bg-slate-900 hover:bg-slate-800"
               }`}
