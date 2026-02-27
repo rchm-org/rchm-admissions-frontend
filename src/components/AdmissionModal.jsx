@@ -19,7 +19,7 @@ export default function AdmissionModal({
     setUpdating(true);
     try {
       const res = await fetch(
-        `${API_BASE}/api/admin/admissions/${admission._id}`,
+        `${API_BASE}/api/admin/admissions/${admission._id}/status`,
         {
           method: "PATCH",
           headers: {
@@ -49,7 +49,7 @@ export default function AdmissionModal({
   const isApproved = status === "approved";
   const isArchived = status === "archived";
 
-  const doc = admission.documents || {};
+  const doc = admission.documents; // Cloudinary URL string or null
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 animate-fadeIn">
@@ -95,46 +95,18 @@ export default function AdmissionModal({
             Documents
           </h3>
 
-          <ul className="space-y-1 text-sm">
-            {doc.marksheet && (
-              <li>
-                <a
-                  href={`${API_BASE}/uploads/${doc.marksheet}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-slate-900 hover:underline"
-                >
-                  Marksheet
-                </a>
-              </li>
-            )}
-
-            {doc.idProof && (
-              <li>
-                <a
-                  href={`${API_BASE}/uploads/${doc.idProof}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-slate-900 hover:underline"
-                >
-                  ID Proof
-                </a>
-              </li>
-            )}
-
-            {doc.photo && (
-              <li>
-                <a
-                  href={`${API_BASE}/uploads/${doc.photo}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-slate-900 hover:underline"
-                >
-                  Photograph
-                </a>
-              </li>
-            )}
-          </ul>
+          {doc ? (
+            <a
+              href={doc}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block text-sm text-blue-600 hover:underline break-all"
+            >
+              View Uploaded Document ↗
+            </a>
+          ) : (
+            <p className="text-sm text-slate-400">No document uploaded.</p>
+          )}
         </div>
 
         {/* Actions */}
@@ -145,10 +117,9 @@ export default function AdmissionModal({
             disabled={isApproved || isArchived || updating}
             onClick={() => updateStatus("approved")}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition
-              ${
-                isApproved || isArchived || updating
-                  ? "bg-slate-300 text-slate-600 cursor-not-allowed"
-                  : "bg-emerald-600 text-white hover:bg-emerald-500"
+              ${isApproved || isArchived || updating
+                ? "bg-slate-300 text-slate-600 cursor-not-allowed"
+                : "bg-emerald-600 text-white hover:bg-emerald-500"
               }
             `}
           >
@@ -160,10 +131,9 @@ export default function AdmissionModal({
             disabled={isApproved || isArchived || updating}
             onClick={() => updateStatus("archived")}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition
-              ${
-                isApproved || isArchived || updating
-                  ? "bg-slate-300 text-slate-600 cursor-not-allowed"
-                  : "bg-slate-900 text-white hover:bg-slate-800"
+              ${isApproved || isArchived || updating
+                ? "bg-slate-300 text-slate-600 cursor-not-allowed"
+                : "bg-slate-900 text-white hover:bg-slate-800"
               }
             `}
           >
@@ -175,10 +145,9 @@ export default function AdmissionModal({
             disabled={!isArchived || updating}
             onClick={() => updateStatus("pending")}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition
-              ${
-                !isArchived || updating
-                  ? "bg-slate-300 text-slate-600 cursor-not-allowed"
-                  : "border border-slate-300 text-slate-700 hover:bg-slate-100"
+              ${!isArchived || updating
+                ? "bg-slate-300 text-slate-600 cursor-not-allowed"
+                : "border border-slate-300 text-slate-700 hover:bg-slate-100"
               }
             `}
           >

@@ -1,287 +1,161 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import api from "../utils/api";
 import toast from "react-hot-toast";
-import { API_BASE } from "../utils/api";
-
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const phoneRegex = /^[0-9]{10}$/;
 
 const COURSES = [
   "Diploma in Hospitality Management",
-  "Craftsmanship Certificate in Hotel Management",
+  "Craftsmanship in Hospitality Management",
 ];
 
-export default function Admission() {
-  const [form, setForm] = useState({
+const Admission = () => {
+  const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     course: "",
   });
+  const [file, setFile] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  const [files, setFiles] = useState({});
-  const [previews, setPreviews] = useState({});
-  const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [submitted, setSubmitted] = useState(false);
-  const [referenceId, setReferenceId] = useState("");
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const courseFromURL = params.get("course");
-    if (COURSES.includes(courseFromURL)) {
-      setForm((p) => ({ ...p, course: courseFromURL }));
-    }
-  }, []);
-
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
-
-  // 🔐 PHONE: digits only, max 10
-  const handlePhoneChange = (e) => {
-    const value = e.target.value
-      .replace(/\D/g, "") // remove non-digits
-      .slice(0, 10);      // cap at 10 digits
-
-    setForm((prev) => ({ ...prev, phone: value }));
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleFile = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    setFiles((p) => ({ ...p, [e.target.name]: file }));
-
-    if (file.type.startsWith("image/")) {
-      const reader = new FileReader();
-      reader.onload = () =>
-        setPreviews((p) => ({ ...p, [e.target.name]: reader.result }));
-      reader.readAsDataURL(file);
-    } else {
-      setPreviews((p) => ({ ...p, [e.target.name]: file.name }));
-    }
-  };
-
-  const validate = () => {
-    const e = {};
-
-    if (!form.name.trim()) e.name = "Name is required";
-    if (!emailRegex.test(form.email)) e.email = "Invalid email address";
-    if (!phoneRegex.test(form.phone))
-      e.phone = "Mobile number must be exactly 10 digits";
-    if (!COURSES.includes(form.course))
-      e.course = "Please select a valid course";
-
-    ["marksheet", "idProof", "photo"].forEach((f) => {
-      if (!files[f]) e[f] = "Required";
-    });
-
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validate()) {
-      toast.error("Please fix the highlighted errors");
-      return;
+
+    if (submitting) return;
+    setSubmitting(true);
+
+    try {
+      const payload = new FormData();
+      Object.entries(formData).forEach(([k, v]) => payload.append(k, v));
+      if (file) payload.append("documents", file);
+
+      await api.post("/admissions", payload, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      toast.success("Admission submitted successfully!");
+      setFormData({ name: "", email: "", phone: "", course: "" });
+      setFile(null);
+      // Reset file input
+      e.target.reset();
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message || "Failed to submit. Please try again."
+      );
+    } finally {
+      setSubmitting(false);
     }
-
-    setLoading(true);
-    setProgress(0);
-
-    const data = new FormData();
-    Object.entries(form).forEach(([k, v]) => data.append(k, v));
-    Object.entries(files).forEach(([k, v]) => data.append(k, v));
-
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", `${API_BASE}/api/admissions`);
-
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) {
-        setProgress(Math.round((e.loaded / e.total) * 100));
-      }
-    };
-
-    xhr.onload = () => {
-      try {
-        const res = JSON.parse(xhr.responseText);
-        if (xhr.status !== 201 && xhr.status !== 200) {
-          throw new Error(res.message);
-        }
-        setReferenceId(res.referenceId);
-        setSubmitted(true);
-        toast.success("Application submitted successfully");
-      } catch (err) {
-        toast.error(err.message || "Submission failed");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    xhr.onerror = () => {
-      toast.error("Upload failed");
-      setLoading(false);
-    };
-
-    xhr.send(data);
   };
 
-  /* ================= SUCCESS ================= */
-  if (submitted) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
-        <div className="bg-white max-w-2xl w-full p-12 rounded-2xl shadow-xl text-center animate-slideUpFade">
-          <h1 className="text-2xl font-semibold">🎉 Application Submitted</h1>
-          <p className="mt-4 text-slate-600">
-            Your reference ID
-            <span className="block mt-2 font-mono text-lg font-semibold">
-              {referenceId}
-            </span>
-          </p>
-          <div className="mt-8 flex gap-4 justify-center">
-            <button
-              onClick={() => window.location.reload()}
-              className="px-6 py-3 rounded-xl bg-slate-900 text-white"
-            >
-              Submit Another
-            </button>
-            <a
-              href="https://rchm.edu.in"
-              className="px-6 py-3 rounded-xl border"
-            >
-              Back to Website
-            </a>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  /* ================= FORM ================= */
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="min-h-screen bg-slate-50 flex items-center justify-center p-8"
-    >
-      <div className="bg-white w-full max-w-4xl rounded-2xl shadow-xl p-10 space-y-8 animate-fadeIn">
-        <h1 className="text-3xl font-semibold text-center">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-10">
+      <div className="bg-white rounded-2xl shadow-sm w-full max-w-lg p-8">
+        <h2 className="text-2xl font-semibold text-slate-900 mb-6">
           Admission Application
-        </h1>
+        </h2>
 
-        <section>
-          <h2 className="text-lg font-medium mb-4">
-            Applicant Information
-          </h2>
-
-          <div className="grid md:grid-cols-2 gap-5">
-            <Input label="Full Name" name="name" value={form.name} onChange={handleChange} error={errors.name} />
-            <Input label="Email Address" name="email" value={form.email} onChange={handleChange} error={errors.email} />
-
-            {/* 🔐 MOBILE NUMBER */}
-            <Input
-              label="Mobile Number"
-              name="phone"
-              value={form.phone}
-              onChange={handlePhoneChange}
-              error={errors.phone}
-              inputMode="numeric"
-              pattern="[0-9]{10}"
-              placeholder="10-digit mobile number"
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Name */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Full Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              name="name"
+              placeholder="Enter your full name"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
+              value={formData.name}
+              onChange={handleChange}
+              required
             />
-
-            {/* COURSE */}
-            <div>
-              <label className="text-sm font-medium">Course Applied For</label>
-              <select
-                name="course"
-                value={form.course}
-                onChange={handleChange}
-                className={`mt-1 w-full px-4 py-3 rounded-lg border ${
-                  errors.course ? "border-red-400" : "border-slate-300"
-                }`}
-              >
-                <option value="">Select a course</option>
-                {COURSES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-              {errors.course && (
-                <p className="text-xs text-red-500 mt-1">{errors.course}</p>
-              )}
-            </div>
           </div>
-        </section>
 
-        <section>
-          <h2 className="text-lg font-medium mb-4">Required Documents</h2>
-          <div className="grid md:grid-cols-3 gap-5">
-            <FileInput label="Marksheet" name="marksheet" onChange={handleFile} preview={previews.marksheet} error={errors.marksheet} />
-            <FileInput label="ID Proof" name="idProof" onChange={handleFile} preview={previews.idProof} error={errors.idProof} />
-            <FileInput label="Photograph" name="photo" onChange={handleFile} preview={previews.photo} error={errors.photo} />
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Email <span className="text-red-500">*</span>
+            </label>
+            <input
+              name="email"
+              type="email"
+              placeholder="Enter your email"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
           </div>
-        </section>
 
-        {loading && (
-          <div className="space-y-2">
-            <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-slate-900 transition-all"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-            <p className="text-sm text-slate-600 text-center">
-              Uploading… {progress}%
-            </p>
+          {/* Phone */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Phone Number <span className="text-red-500">*</span>
+            </label>
+            <input
+              name="phone"
+              type="tel"
+              placeholder="Enter your phone number"
+              pattern="[0-9+\-\s]{7,15}"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
+              value={formData.phone}
+              onChange={handleChange}
+              required
+            />
           </div>
-        )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full mt-4 px-8 py-4 rounded-xl bg-slate-900 text-white text-lg hover:bg-slate-800 disabled:opacity-60"
-        >
-          {loading ? "Submitting…" : "Apply for Admission"}
-        </button>
+          {/* Course */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Course <span className="text-red-500">*</span>
+            </label>
+            <select
+              name="course"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
+              value={formData.course}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Select a course</option>
+              {COURSES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Document upload */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Supporting Document{" "}
+              <span className="text-slate-400 text-xs">(PDF, JPG, PNG — max 2MB)</span>
+            </label>
+            <input
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png"
+              onChange={(e) => setFile(e.target.files[0] || null)}
+              className="w-full text-sm text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={submitting}
+            className={`w-full py-2.5 rounded-lg font-medium text-white transition
+              ${submitting
+                ? "bg-slate-400 cursor-not-allowed"
+                : "bg-slate-900 hover:bg-slate-800"
+              }`}
+          >
+            {submitting ? "Submitting…" : "Submit Application"}
+          </button>
+        </form>
       </div>
-    </form>
-  );
-}
-
-/* ============ SMALL COMPONENTS ============ */
-
-function Input({ label, error, ...props }) {
-  return (
-    <div>
-      <label className="text-sm font-medium">{label}</label>
-      <input
-        {...props}
-        className={`mt-1 w-full px-4 py-3 rounded-lg border ${
-          error ? "border-red-400" : "border-slate-300"
-        }`}
-      />
-      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
     </div>
   );
-}
+};
 
-function FileInput({ label, preview, error, ...props }) {
-  return (
-    <div>
-      <label className="text-sm font-medium">{label}</label>
-      <input type="file" {...props} className="mt-1 w-full text-sm" />
-      {preview && (
-        <div className="mt-2">
-          {preview.startsWith("data:image") ? (
-            <img src={preview} alt="preview" className="h-24 rounded-md object-cover" />
-          ) : (
-            <p className="text-xs text-slate-600">{preview}</p>
-          )}
-        </div>
-      )}
-      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
-    </div>
-  );
-}
+export default Admission;

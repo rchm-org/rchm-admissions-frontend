@@ -1,19 +1,19 @@
-const rawBase =
-  import.meta.env.VITE_API_BASE || "http://localhost:5000";
+// src/utils/api.js
+import axios from "axios";
 
-/**
- * Normalize base URL
- * - removes trailing slash
- * - prevents double slashes in fetch calls
- */
-export const API_BASE = rawBase.replace(/\/$/, "");
+export const API_BASE =
+  import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-/**
- * Dev-time sanity check
- * (won’t break prod, but helps catch env mistakes early)
- */
-if (import.meta.env.DEV && !import.meta.env.VITE_API_BASE) {
-  console.warn(
-    "⚠️ VITE_API_BASE is not defined. Falling back to http://localhost:5000"
-  );
-}
+const api = axios.create({
+  baseURL: `${API_BASE}/api`,
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export default api;

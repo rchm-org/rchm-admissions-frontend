@@ -1,105 +1,65 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { API_BASE } from "../utils/api";
+import api from "../utils/api";
 
-export default function Login() {
+const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
+  const [error, setError] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
+    setError("");
 
     try {
-      const res = await fetch(
-        `${API_BASE}/api/admin/auth/login`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        }
-      );
+      const res = await api.post("/admin/auth/login", {
+        email,
+        password,
+      });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Login failed");
+      login(res.data.token);
 
-      login(data.token);
-      navigate("/admin");
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+      // IMPORTANT: replace prevents history loop
+      navigate("/admin/admissions", { replace: true });
+    } catch {
+      setError("Invalid credentials");
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-sm p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <form className="bg-white p-6 rounded shadow w-80" onSubmit={handleSubmit}>
+        <h2 className="text-xl font-bold mb-4 text-center">Admin Login</h2>
 
-        {/* Header */}
-        <h1 className="text-2xl font-semibold text-slate-900 mb-2">
-          Admin Login
-        </h1>
-        <p className="text-slate-600 mb-8">
-          Authorized personnel only.
-        </p>
+        {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
 
-        {/* Error */}
-        {error && (
-          <div className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 px-4 py-2 text-sm">
-            {error}
-          </div>
-        )}
+        <input
+          type="email"
+          placeholder="Email"
+          className="w-full p-2 border mb-3"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <input
+          type="password"
+          placeholder="Password"
+          className="w-full p-2 border mb-4"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
 
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Email
-            </label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-slate-900"
-            />
-          </div>
-
-          {/* Password */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Password
-            </label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-slate-900"
-            />
-          </div>
-
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full mt-4 rounded-lg bg-slate-900 text-white py-3 font-medium hover:bg-slate-800 transition disabled:opacity-60"
-          >
-            {loading ? "Signing in..." : "Sign In"}
-          </button>
-
-        </form>
-      </div>
+        <button className="w-full bg-blue-600 text-white py-2 rounded">
+          Login
+        </button>
+      </form>
     </div>
   );
-}
+};
+
+export default Login;
