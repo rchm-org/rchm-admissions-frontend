@@ -3,6 +3,12 @@ import { API_BASE } from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 
+const DOC_LABELS = {
+  marksheet: "📋 Marksheet",
+  idDocument: "🪪 Identity Document",
+  photograph: "📸 Photograph",
+};
+
 export default function AdmissionModal({ admission, onClose, onStatusUpdate }) {
   const { token } = useAuth();
   const [updating, setUpdating] = useState(false);
@@ -42,9 +48,8 @@ export default function AdmissionModal({ admission, onClose, onStatusUpdate }) {
   const isPending = status === "pending";
   const isApproved = status === "approved";
   const isArchived = status === "archived";
-  const doc = admission.documents; // AWS S3 URL or null
+  const docs = admission.documents ?? {};
 
-  // Button enabled states
   const canApprove = isPending && !updating;
   const canArchive = (isPending || isApproved) && !updating;
   const canUnarchive = isArchived && !updating;
@@ -58,7 +63,7 @@ export default function AdmissionModal({ admission, onClose, onStatusUpdate }) {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 animate-fadeIn"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="relative bg-white rounded-xl shadow-xl max-w-xl w-full mx-4 p-6 animate-slideUpFade">
+      <div className="relative bg-white rounded-xl shadow-xl max-w-xl w-full mx-4 p-6 animate-slideUpFade max-h-[90vh] overflow-y-auto">
 
         {/* Close */}
         <button
@@ -99,21 +104,28 @@ export default function AdmissionModal({ admission, onClose, onStatusUpdate }) {
           ))}
         </dl>
 
-        {/* Document */}
+        {/* Documents */}
         <div className="border-t border-slate-100 pt-4 mb-6">
-          <p className="text-sm font-medium text-slate-700 mb-2">Supporting Document</p>
-          {doc ? (
-            <a
-              href={doc}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 hover:underline"
-            >
-              📄 View uploaded document ↗
-            </a>
-          ) : (
-            <p className="text-sm text-slate-400">No document uploaded.</p>
-          )}
+          <p className="text-sm font-medium text-slate-700 mb-3">Documents</p>
+          <div className="space-y-2">
+            {Object.entries(DOC_LABELS).map(([key, label]) => (
+              <div key={key} className="flex items-center justify-between text-sm">
+                <span className="text-slate-600">{label}</span>
+                {docs[key] ? (
+                  <a
+                    href={docs[key]}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 hover:underline text-xs"
+                  >
+                    View ↗
+                  </a>
+                ) : (
+                  <span className="text-slate-400 text-xs">Not uploaded</span>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Actions */}
