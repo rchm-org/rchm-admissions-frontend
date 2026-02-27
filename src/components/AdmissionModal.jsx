@@ -97,7 +97,7 @@ export default function AdmissionModal({
 
           {doc ? (
             <a
-              href={`${API_BASE}/uploads/${doc}`}
+              href={doc}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block text-sm text-blue-600 hover:underline break-all"
