@@ -1,11 +1,13 @@
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import AdminProfileModal from "./AdminProfileModal";
 
 export default function AdminHeader({ search, setSearch, date, setDate }) {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -28,12 +30,29 @@ export default function AdminHeader({ search, setSearch, date, setDate }) {
         className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300"
       />
 
-      <button
-        onClick={() => setShowLogoutConfirm(true)}
-        className="text-sm px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-700 transition-colors whitespace-nowrap"
-      >
-        Logout
-      </button>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => setShowProfile(true)}
+          className="text-sm px-4 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 transition-colors font-medium flex items-center gap-2 whitespace-nowrap"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Admin Profile
+        </button>
+
+        <button
+          onClick={() => setShowLogoutConfirm(true)}
+          className="text-sm px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-700 transition-colors whitespace-nowrap"
+        >
+          Logout
+        </button>
+      </div>
+
+      {/* Profile Modal */}
+      {showProfile && (
+        <AdminProfileModal onClose={() => setShowProfile(false)} />
+      )}
 
       {/* Logout Confirmation Modal */}
       {showLogoutConfirm && (
