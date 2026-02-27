@@ -128,7 +128,7 @@ const Admission = () => {
           {[
             { name: "name", label: "Full Name", type: "text", placeholder: "Enter your full name" },
             { name: "email", label: "Email", type: "email", placeholder: "Enter your email" },
-            { name: "phone", label: "Phone Number", type: "tel", placeholder: "Enter your phone number", pattern: "[0-9+\\-\\s]{7,15}" },
+            { name: "phone", label: "Phone Number", type: "tel", placeholder: "10-digit mobile number", pattern: "[0-9]{10}", maxLength: 10 },
           ].map(({ name, label, type, placeholder, pattern }) => (
             <div key={name}>
               <label className="block text-sm font-medium text-slate-700 mb-1">
